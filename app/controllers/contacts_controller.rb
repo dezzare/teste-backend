@@ -1,6 +1,7 @@
 class ContactsController < ApplicationController
   before_action :set_contact, only: %i[show edit update destroy]
   after_action :kafka_message, only: %i[create update destroy]
+  after_action :kafka_log, only: %i[create update destroy]
 
   # GET /contacts or /contacts.json
   def index
@@ -81,12 +82,11 @@ class ContactsController < ApplicationController
 
   def kafka_log
     message = {
-      contact_log: {
-        id: @contact.id,
-        nome: @contact.name,
-        email: @contact.email,
-        sysdate: Time.now
-      }
+      id: @contact.id,
+      nome: @contact.name,
+      email: @contact.email,
+      sysdate: Time.now
+
     }
     DeliveryBoy.deliver(message.to_json, topic: 'contacts_logs')
   end
