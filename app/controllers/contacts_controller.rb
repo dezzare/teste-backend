@@ -1,6 +1,7 @@
 class ContactsController < ApplicationController
-  before_action :set_contact, only: %i[ show edit update destroy ]
-  after_action :kafka_message, only: %i[ create update destroy ]
+  before_action :set_contact, only: %i[show edit update destroy]
+  after_action :kafka_message, only: %i[create update destroy]
+  after_action :kafka_log, only: %i[create update destroy]
 
   # GET /contacts or /contacts.json
   def index
@@ -8,8 +9,7 @@ class ContactsController < ApplicationController
   end
 
   # GET /contacts/1 or /contacts/1.json
-  def show
-  end
+  def show; end
 
   # GET /contacts/new
   def new
@@ -17,12 +17,11 @@ class ContactsController < ApplicationController
   end
 
   # GET /contacts/1/edit
-  def edit
-  end
+  def edit; end
 
   def search
     @name = params[:name]
-    @contacts = Contact.where("name like ?",  "%#{@name}%").order(name: :desc)
+    @contacts = Contact.where('name like ?', "%#{@name}%").order(name: :desc)
     render :index
   end
 
@@ -32,7 +31,7 @@ class ContactsController < ApplicationController
 
     respond_to do |format|
       if @contact.save
-        format.html { redirect_to contact_url(@contact), notice: "Contact was successfully created." }
+        format.html { redirect_to contact_url(@contact), notice: 'Contact was successfully created.' }
         format.json { render :show, status: :created, location: @contact }
       else
         format.html { render :new, status: :unprocessable_entity }
@@ -45,7 +44,7 @@ class ContactsController < ApplicationController
   def update
     respond_to do |format|
       if @contact.update(contact_params)
-        format.html { redirect_to contact_url(@contact), notice: "Contact was successfully updated." }
+        format.html { redirect_to contact_url(@contact), notice: 'Contact was successfully updated.' }
         format.json { render :show, status: :ok, location: @contact }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -59,24 +58,36 @@ class ContactsController < ApplicationController
     @contact.destroy
 
     respond_to do |format|
-      format.html { redirect_to contacts_url, notice: "Contact was successfully destroyed." }
+      format.html { redirect_to contacts_url, notice: 'Contact was successfully destroyed.' }
       format.json { head :no_content }
     end
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_contact
-      @contact = Contact.find(params[:id])
-    end
 
-    # Only allow a list of trusted parameters through.
-    def contact_params
-      params.require(:contact).permit(:name, :birthday, :email, :mobile, :message, :advertising, :active)
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_contact
+    @contact = Contact.find(params[:id])
+  end
 
-    def kafka_message
-      message = @contact.destroyed? ? @contact.as_json.merge({destroyed: true}).to_json : @contact.as_json.to_json
-      DeliveryBoy.deliver(message, topic: 'contacts_message')
-    end
+  # Only allow a list of trusted parameters through.
+  def contact_params
+    params.require(:contact).permit(:name, :cpf_cnpj, :birthday, :email, :mobile, :message, :advertising, :active)
+  end
+
+  def kafka_message
+    message = @contact.destroyed? ? @contact.as_json.merge({ destroyed: true }).to_json : @contact.as_json.to_json
+    DeliveryBoy.deliver(message, topic: 'contacts_message')
+  end
+
+  def kafka_log
+    message = {
+      id: @contact.id,
+      nome: @contact.name,
+      email: @contact.email,
+      sysdate: Time.now
+
+    }
+    DeliveryBoy.deliver(message.to_json, topic: 'contacts_logs')
+  end
 end

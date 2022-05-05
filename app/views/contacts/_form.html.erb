@@ -23,6 +23,12 @@
     <%=f.error_span(:name) %>
   </div>
   <div class="form-group">
+    <%= f.label :cpf_cnpj, :class => 'control-label col-lg-2' %>
+    <div class="col-lg-10">
+      <%= f.text_field :cpf_cnpj, :class => 'form-control' %>
+    </div>
+    <%=f.error_span(:cpf_cnpj) %>
+  </div><div class="form-group">
     <%= f.label :birthday, :class => 'control-label col-lg-2' %>
     <div class="col-lg-10">
       <%= f.text_field :birthday, :class => 'form-control' %>

@@ -3,10 +3,10 @@ FROM ruby:3.0.2-alpine3.13
 LABEL maintainer="Matheus M<mmacedo@icasei.com.br>"
 
 RUN apk --update --upgrade add \
-      bash\
-      sqlite-dev\
-      build-base\
-      tzdata
+  bash\
+  sqlite-dev\
+  build-base\
+  tzdata
 
 ENV INSTALL_PATH /teste-backend
 
@@ -21,6 +21,8 @@ RUN bundle install
 ADD . $INSTALL_PATH
 
 RUN mkdir -p $INSTALL_PATH/tmp/pids
+
+RUN mkdir -p $INSTALL_PATH/tmp/redis
 
 RUN chmod +x run.sh
 
